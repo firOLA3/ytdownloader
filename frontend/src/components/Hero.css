@@ -1,0 +1,132 @@
+.hero {
+  padding-top: 4rem;
+  padding-bottom: 6rem;
+}
+
+.hero-label {
+  font-size: 0.85rem;
+  margin-bottom: 2rem;
+}
+
+.hero-title {
+  font-size: 5.5rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  margin-bottom: 1.5rem;
+  line-height: 1.05;
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 4rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 3rem;
+  }
+}
+
+.hero-subtitle {
+  color: var(--text-gray);
+  font-size: 1.125rem;
+  margin-bottom: 4rem;
+  max-width: 600px;
+}
+
+.hero-input-area {
+  display: flex;
+  background-color: var(--bg-light);
+  padding: 0.5rem;
+  border-radius: 2px;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 600px) {
+  .hero-input-area {
+    flex-direction: column;
+    padding: 0.25rem;
+  }
+}
+
+.hero-input {
+  flex-grow: 1;
+  background: transparent;
+  border: none;
+  padding: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--text-black);
+  outline: none;
+}
+
+.hero-input::placeholder {
+  color: var(--text-dark-gray);
+}
+
+.hero-button {
+  padding: 0 2rem;
+  color: var(--text-black);
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: filter 0.2s;
+}
+
+@media (max-width: 600px) {
+  .hero-button {
+    padding: 1.5rem;
+    width: 100%;
+    margin-top: 0.25rem;
+  }
+}
+
+.hero-button:hover {
+  filter: brightness(1.1);
+}
+
+.hero-supported {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.75rem;
+}
+
+.supported-icons {
+  display: flex;
+  gap: 1rem;
+  color: var(--text-white);
+  font-weight: bold;
+}
+
+/* State Loader Animations */
+.loader-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0,0,0,0.2);
+  border-top: 2px solid var(--text-black);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.blinking-text {
+  animation: blink 1.2s infinite ease-in-out;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+

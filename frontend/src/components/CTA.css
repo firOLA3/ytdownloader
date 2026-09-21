@@ -1,0 +1,39 @@
+.cta-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 6rem 0;
+}
+
+.cta-label {
+  font-size: 0.85rem;
+  margin-bottom: 2rem;
+}
+
+.cta-title {
+  font-size: 4rem;
+  margin-bottom: 3rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  max-width: 800px;
+}
+
+.cta-button {
+  padding: 1.25rem 3rem;
+  color: var(--text-black);
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: filter 0.2s;
+}
+
+.cta-button:hover {
+  filter: brightness(1.1);
+}
+
+@media (max-width: 768px) {
+  .cta-title {
+    font-size: 2.5rem;
+  }
+}

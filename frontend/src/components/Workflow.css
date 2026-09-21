@@ -1,0 +1,59 @@
+.workflow {
+  color: var(--text-black);
+}
+
+.workflow-label {
+  font-size: 0.85rem;
+  margin-bottom: 3rem;
+}
+
+.workflow-separator {
+  height: 2px;
+  background-color: var(--text-black);
+  margin-bottom: 3rem;
+  width: 100%;
+}
+
+.workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4rem;
+}
+
+.step-label {
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+}
+
+.step-heading {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.step-desc {
+  color: var(--text-dark-gray);
+  font-size: 1.125rem;
+}
+
+@media (max-width: 900px) {
+  .workflow-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  
+  .workflow-step {
+    border-top: 2px solid var(--text-black);
+    padding: 3rem 0;
+  }
+  
+  .workflow-separator {
+    display: none; /* We use border-top on items instead */
+  }
+  
+  .workflow-step:last-child {
+    border-bottom: 2px solid var(--text-black);
+  }
+}

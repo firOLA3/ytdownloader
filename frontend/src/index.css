@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=Space+Mono:wght@400;700&display=swap');
+
+:root {
+  --bg-dark: #0a0a0a;
+  --bg-dark-green: #11291b;
+  --bg-light: #f5f5ef;
+  
+  --accent-neon: #aeff00;
+  
+  --text-white: #ffffff;
+  --text-gray: #9ca3af;
+  --text-black: #000000;
+  --text-dark-gray: #374151;
+  
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Space Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-dark);
+  color: var(--text-white);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+button {
+  font-family: var(--font-sans);
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-weight: 700;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Typography Utilities */
+.mono {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.text-neon {
+  color: var(--accent-neon);
+}
+
+.bg-neon {
+  background-color: var(--accent-neon);
+}
+
+.bg-dark-green {
+  background-color: var(--bg-dark-green);
+}
+
+.bg-light {
+  background-color: var(--bg-light);
+}
+
+/* Layout Utilities */
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.section-padding {
+  padding: 8rem 0;
+}
