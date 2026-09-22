@@ -1,0 +1,33 @@
+name: Deploy Backend to cPanel
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**' # Only trigger when changes are made inside the backend folder
+
+jobs:
+  api-deploy:
+    name: Deploy Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v4
+        
+      - name: 🚀 Sync files via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # The local folder containing your Node.js code
+          local-dir: ./backend/
+          # The destination folder in cPanel. MUST be outside public_html!
+          server-dir: /backend/
+          # Exclude files that shouldn't be overridden or take too long to upload
+          exclude: |
+            **/.env*
+            **/node_modules/**
+            **/downloads/**
