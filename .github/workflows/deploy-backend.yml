@@ -26,7 +26,7 @@ jobs:
           # The local folder containing your Node.js code
           local-dir: ./backend/
           # The destination folder in cPanel. MUST be outside public_html!
-          server-dir: /backend/
+          server-dir: ./backend/
           # Exclude files that shouldn't be overridden or take too long to upload
           exclude: |
             **/.env*

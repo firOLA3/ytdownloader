@@ -41,4 +41,4 @@ jobs:
           # The folder where Vite outputs the production build
           local-dir: ./frontend/dist/
           # The exact folder name created by cPanel for your subdomain
-          server-dir: /ytdownloader.firolaport.com.ng/
+          server-dir: ./ytdownloader.firolaport.com.ng/
