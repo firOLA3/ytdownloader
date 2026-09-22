@@ -7,8 +7,8 @@ const fetchInfo = (url) => {
   return new Promise((resolve, reject) => {
     // Nightly yt-dlp update fixed the 429 error, so we revert back to default client to get all DASH formats
     // Nightly yt-dlp update fixed the 429 error, so we revert back to default client to get all DASH formats
-    // We add ios client spoofing to bypass datacenter IP bans without losing DASH formats
-    const ytdlp = spawn('yt-dlp', ['--extractor-args', 'youtube:player_client=ios,tv', '-j', url]);
+    // Render IP is hard-banned. We MUST use Android client spoofing to bypass it, even though it limits max resolution to 720p.
+    const ytdlp = spawn('yt-dlp', ['--extractor-args', 'youtube:player_client=android', '-j', url]);
     
     let stdoutData = '';
     let stderrData = '';
@@ -70,7 +70,7 @@ const startDownload = (jobId, url, formatId, type, title) => {
   const fileNameTemplate = `${sanitizedTitle}_${jobId}.%(ext)s`;
   const outputPath = path.join(downloadDir, fileNameTemplate);
 
-  let args = ['--extractor-args', 'youtube:player_client=ios,tv'];
+  let args = ['--extractor-args', 'youtube:player_client=android'];
   
   if (type === 'audio') {
     args.push('-x', '--audio-format', 'mp3', '-o', outputPath, url);
