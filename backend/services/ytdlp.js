@@ -6,7 +6,8 @@ const DownloadHistory = require('../models/DownloadHistory');
 const fetchInfo = (url) => {
   return new Promise((resolve, reject) => {
     // Nightly yt-dlp update fixed the 429 error, so we revert back to default client to get all DASH formats
-    const ytdlp = spawn('yt-dlp', ['-j', url]);
+    // We explicitly set the js runtime to Node since it's available in our Docker container
+    const ytdlp = spawn('yt-dlp', ['--js-runtimes', 'node', '-j', url]);
     
     let stdoutData = '';
     let stderrData = '';
@@ -68,14 +69,14 @@ const startDownload = (jobId, url, formatId, type, title) => {
   const fileNameTemplate = `${sanitizedTitle}_${jobId}.%(ext)s`;
   const outputPath = path.join(downloadDir, fileNameTemplate);
 
-  let args = [];
+  let args = ['--js-runtimes', 'node'];
   
   if (type === 'audio') {
-    args = ['-x', '--audio-format', 'mp3', '-o', outputPath, url];
+    args.push('-x', '--audio-format', 'mp3', '-o', outputPath, url);
   } else {
     // If the selected format is a video-only DASH stream, yt-dlp needs +bestaudio to merge it.
     // If it's already a pre-merged stream, yt-dlp will safely ignore +bestaudio.
-    args = ['-f', `${formatId}+bestaudio`, '--merge-output-format', 'mp4', '-o', outputPath, url];
+    args.push('-f', `${formatId}+bestaudio`, '--merge-output-format', 'mp4', '-o', outputPath, url);
   }
 
   updateJob(jobId, { status: 'downloading', stage: 'downloading' });
