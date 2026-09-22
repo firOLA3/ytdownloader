@@ -29,6 +29,11 @@ mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/ytdownloade
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.error('MongoDB connection error:', err));
 
+// Basic health check route
+app.get('/', (req, res) => {
+  res.status(200).json({ status: 'online', message: 'YTDL API is running' });
+});
+
 // Routes
 app.use('/api', apiRoutes);
 
