@@ -13,7 +13,7 @@ const DownloadModal = ({ videoTitle, videoUrl, format, onClose }) => {
 
     const startDownload = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/download', {
+        const response = await fetch('https://ytdownloader-wj92.onrender.com/api/download', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -42,13 +42,13 @@ const DownloadModal = ({ videoTitle, videoUrl, format, onClose }) => {
 
     const pollStatus = setInterval(async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/download-status/${jobId}`);
+        const response = await fetch(`https://ytdownloader-wj92.onrender.com/api/download-status/${jobId}`);
         if (response.ok) {
           const job = await response.json();
           setProgress(job.percent || 0);
           setStatus(job.status);
           if (job.status === 'done') {
-            setFileUrl(`http://localhost:5000${job.filePath}`);
+            setFileUrl(`https://ytdownloader-wj92.onrender.com${job.filePath}`);
             clearInterval(pollStatus);
           } else if (job.status === 'error') {
             setErrorMessage(job.error || 'An error occurred during download.');

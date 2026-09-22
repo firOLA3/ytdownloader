@@ -21,7 +21,7 @@ function App() {
     setVideoUrl(url);
 
     try {
-      const response = await fetch('http://localhost:5000/api/fetch-info', {
+      const response = await fetch('https://ytdownloader-wj92.onrender.com/api/fetch-info', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
