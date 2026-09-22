@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'backend/**' # Only trigger when changes are made inside the backend folder
+  workflow_dispatch:
 
 jobs:
   api-deploy:

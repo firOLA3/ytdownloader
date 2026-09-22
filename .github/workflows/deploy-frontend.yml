@@ -6,6 +6,7 @@ on:
       - main # Change this if your main branch is named 'master'
     paths:
       - 'frontend/**' # Only trigger when changes are made inside the frontend folder
+  workflow_dispatch: # This adds a manual "Run workflow" button in GitHub!
 
 jobs:
   web-deploy:
@@ -39,5 +40,5 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           # The folder where Vite outputs the production build
           local-dir: ./frontend/dist/
-          # Change this to public_html/ytdownloader or whatever subfolder you want
-          server-dir: /public_html/
+          # The exact folder name created by cPanel for your subdomain
+          server-dir: /ytdownloader.firolaport.com.ng/
