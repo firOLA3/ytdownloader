@@ -5,6 +5,34 @@ const ytdlpService = require('../services/ytdlp');
 const jobTracker = require('../services/jobTracker');
 const DownloadHistory = require('../models/DownloadHistory');
 
+// Map an internal failure code onto an appropriate HTTP status.
+function statusForCode(code) {
+  switch (code) {
+    case 'NOT_FOUND':
+    case 'PRIVATE':
+    case 'AGE_RESTRICTED':
+    case 'LOGIN_REQUIRED':
+    case 'GEO_BLOCKED':
+      return 422; // upstream understood the URL and rejected it
+    case 'YTDLP_MISSING':
+    case 'SPAWN_ERROR':
+      return 500;
+    default:
+      return 502; // upstream (YouTube) refused
+  }
+}
+
+// GET /api/health — deployment diagnostics, so production problems are visible
+// without redeploying to add a log line.
+router.get('/health', async (req, res) => {
+  try {
+    const diagnostics = await ytdlpService.getDiagnostics();
+    res.json({ status: 'ok', ...diagnostics });
+  } catch (error) {
+    res.status(500).json({ status: 'error', error: error.message });
+  }
+});
+
 // POST /api/fetch-info
 router.post('/fetch-info', async (req, res) => {
   const { url } = req.body;
@@ -16,26 +44,32 @@ router.post('/fetch-info', async (req, res) => {
     const info = await ytdlpService.fetchInfo(url);
     res.json(info);
   } catch (error) {
-    console.error('Fetch info error:', error);
-    res.status(500).json({ error: 'Failed to fetch video information' });
+    console.error('Fetch info error:', `[${error.code || 'UNKNOWN'}]`, error.message, error.detail || '');
+    const isKnown = error instanceof ytdlpService.YtdlpError;
+    res.status(statusForCode(error.code)).json({
+      error: isKnown ? error.message : 'Failed to fetch video information',
+      code: error.code || 'UNKNOWN',
+      hint: error.hint || undefined,
+    });
   }
 });
 
 // POST /api/download
 router.post('/download', (req, res) => {
-  const { url, formatId, type, title } = req.body;
-  
+  const { url, formatId, type, title, playerClient } = req.body;
+
   if (!url || !type || !title) {
     return res.status(400).json({ error: 'url, type, and title are required' });
   }
 
   const jobId = crypto.randomBytes(8).toString('hex');
-  
+
   // Initialize job tracking
   jobTracker.createJob(jobId, { url, type, title });
 
-  // Start background process
-  ytdlpService.startDownload(jobId, url, formatId, type, title);
+  // Start background process. playerClient pins the exact client that produced
+  // this format list — format IDs differ between player clients.
+  ytdlpService.startDownload(jobId, url, formatId, type, title, playerClient);
 
   // Return immediately
   res.json({ jobId });
@@ -56,7 +90,7 @@ router.get('/download-status/:jobId', (req, res) => {
 // GET /api/download-stream/:jobId (SSE endpoint)
 router.get('/download-stream/:jobId', (req, res) => {
   const { jobId } = req.params;
-  
+
   // Set headers for SSE
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './History.css';
 import { Download, Clock, Video, Music } from 'lucide-react';
+import { apiUrl } from '../lib/api';
 
 const History = () => {
   const [history, setHistory] = useState([]);
@@ -13,8 +14,7 @@ const History = () => {
 
   const fetchHistory = async () => {
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
-      const response = await fetch(`${API_BASE}/api/history`);
+      const response = await fetch(apiUrl('/api/history'));
       if (!response.ok) throw new Error('Failed to fetch history');
       
       const data = await response.json();
@@ -95,7 +95,7 @@ const History = () => {
                     </td>
                     <td className="action-col">
                       <a 
-                        href={`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}${item.filePath}`} 
+                        href={item.filePath ? apiUrl(item.filePath) : '#'} 
                         download 
                         className="history-download-btn"
                         title="Download again"

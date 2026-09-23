@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { apiUrl, readApiError } from '../lib/api';
 import './DownloadModal.css';
 
-const DownloadModal = ({ videoTitle, videoUrl, format, onClose }) => {
+const DownloadModal = ({ videoTitle, videoUrl, format, playerClient, onClose }) => {
   const [jobId, setJobId] = useState(null);
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('initializing');
   const [fileUrl, setFileUrl] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [errorHint, setErrorHint] = useState('');
   const [speed, setSpeed] = useState('');
   const [eta, setEta] = useState('');
 
@@ -15,19 +17,27 @@ const DownloadModal = ({ videoTitle, videoUrl, format, onClose }) => {
 
     const startDownload = async () => {
       try {
-        const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
-        const response = await fetch(`${API_BASE}/api/download`, {
+        const response = await fetch(apiUrl('/api/download'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             url: videoUrl,
             formatId: format.formatId,
             type: format.originalType,
-            title: videoTitle
+            title: videoTitle,
+            // Pin the client that produced this format list — format IDs are
+            // player-client specific and are not interchangeable.
+            playerClient
           })
         });
 
-        if (!response.ok) throw new Error('Failed to start download');
+        if (!response.ok) {
+          const info = await readApiError(response, 'Failed to start download');
+          setStatus('error');
+          setErrorMessage(info.message);
+          setErrorHint(info.hint);
+          return;
+        }
         const data = await response.json();
         setJobId(data.jobId);
       } catch (err) {
@@ -38,13 +48,12 @@ const DownloadModal = ({ videoTitle, videoUrl, format, onClose }) => {
     };
 
     startDownload();
-  }, [format, videoUrl, videoTitle]);
+  }, [format, videoUrl, videoTitle, playerClient]);
 
   useEffect(() => {
     if (!jobId || status === 'done' || status === 'error') return;
 
-    const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
-    const eventSource = new EventSource(`${API_BASE}/api/download-stream/${jobId}`);
+    const eventSource = new EventSource(apiUrl(`/api/download-stream/${jobId}`));
 
     eventSource.onmessage = (event) => {
       try {
@@ -55,11 +64,11 @@ const DownloadModal = ({ videoTitle, videoUrl, format, onClose }) => {
         if (job.eta) setEta(job.eta);
         
         if (job.status === 'done') {
-          const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
-          setFileUrl(`${API_BASE}${job.filePath}`);
+          setFileUrl(apiUrl(job.filePath));
           eventSource.close();
         } else if (job.status === 'error') {
           setErrorMessage(job.error || 'An error occurred during download.');
+          setErrorHint(job.errorHint || '');
           eventSource.close();
         }
       } catch (err) {
@@ -123,7 +132,12 @@ const DownloadModal = ({ videoTitle, videoUrl, format, onClose }) => {
 
           {status === 'error' && (
              <div className="modal-wait-text mono text-neon" style={{color: '#ff4444'}}>
-               ERROR: {errorMessage}
+               <div>ERROR: {errorMessage}</div>
+               {errorHint && (
+                 <div className="text-gray" style={{marginTop: '0.5rem', fontSize: '0.8rem'}}>
+                   {errorHint}
+                 </div>
+               )}
              </div>
           )}
           

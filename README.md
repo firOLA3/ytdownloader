@@ -88,16 +88,19 @@ npm run dev
 ```text
 ytdownloader/
 ├── backend/
-│   ├── downloads/         # Temporary storage for finished media
+│   ├── downloads/         # Temporary storage for finished media (gitignored)
 │   ├── models/            # Mongoose schemas (DownloadHistory.js)
 │   ├── routes/            # Express endpoints (api.js)
 │   ├── services/          # Business logic (jobTracker.js, ytdlp.js)
-│   └── index.js           # Server entry point
+│   ├── server.js          # Server entry point
+│   ├── entrypoint.sh      # Starts the PO-token provider, then server.js
+│   ├── Dockerfile         # node:22 + nightly yt-dlp + ffmpeg + bgutil provider
+│   └── .env.example       # Every configurable knob, documented
 └── frontend/
     └── src/
         ├── components/    # Reusable UI parts (Hero, Features, Header, DownloadModal)
         ├── context/       # React Context (ThemeProvider.js)
-        ├── pages/         # Route views (Home, Convert, History)
+        ├── lib/           # api.js — single source of truth for the API origin
         ├── index.css      # Global styles, variables, & animations
         └── App.jsx        # Routing configuration
 ```
@@ -106,9 +109,96 @@ ytdownloader/
 
 ## ⚠️ Notes on Deployment
 
-Deploying `yt-dlp` applications to cloud providers (like Render, Vercel, or Heroku) is notoriously difficult because YouTube actively blocks the IP ranges of major data centers with `HTTP 429` or `403 Forbidden` errors. 
+Deploying a `yt-dlp` application to a cloud provider (Render, Heroku, a VPS) fails in a very
+specific way: it works perfectly on `localhost` and every fetch fails in production with
 
-**For production deployment, you will need:**
-1. A VPS (Virtual Private Server) with a clean, residential-like IP address.
-2. Or a rotating proxy network injected into the `yt-dlp` config via the `--proxy` flag.
-3. The current codebase successfully runs locally to leverage your personal residential IP and entirely bypass these cloud restrictions.
+```
+ERROR: [youtube] VIDEOID: Sign in to confirm you're not a bot.
+```
+
+### Why this happens
+
+YouTube does not judge the request by the URL — it judges it by **where the request came from**.
+A residential IP is trusted; a datacentre IP (Render's, AWS's, GCP's) is not.
+
+On top of that, yt-dlp's default player clients are `('visionos', 'web')` — see
+`_DEFAULT_CLIENTS` in `yt_dlp/extractor/youtube/_video.py`. Those two are exactly the clients
+YouTube bot-checks hardest from cloud IPs, so the default configuration is the worst case.
+
+Since 2024 the `web` client also requires a **proof-of-origin (PO) token** — a value only
+YouTube's own JavaScript, running in a real browser, can produce. yt-dlp cannot fabricate one,
+so a request that claims to be a browser but cannot prove it gets the "not a bot" challenge.
+This is why cookies alone often no longer fix it: cookies say *who* you are, not *where the
+request came from*.
+
+### How this repo handles it
+
+1. **A bundled PO-token provider.** The Docker image builds
+   [bgutil-ytdlp-pot-provider](https://github.com/Brainicism/bgutil-ytdlp-pot-provider) and
+   `entrypoint.sh` runs it on `127.0.0.1:4416`. This supplies the tokens the `mweb` client needs.
+2. **A player-client fallback chain** (`backend/services/ytdlp.js`), tried in order until one
+   succeeds. Only genuine blocks trigger the next attempt:
+
+   | PO provider reachable | Chain tried |
+   | --- | --- |
+   | Yes (default in Docker) | `mweb` → `tv_simply` → `default` |
+   | No | `tv_simply` → `tv` → `default` |
+
+   `mweb` is the client yt-dlp recommends for a flagged IP. `tv_simply` needs no PO token and is
+   rarely bot-checked. `default` is kept last so the app keeps tracking future yt-dlp releases.
+3. **Client pinning between fetch and download.** `fetchInfo` returns `clientUsed` and the
+   frontend sends it back on `/api/download`. Format IDs are client-specific and are **not**
+   interchangeable — reusing an ID under a different client yields "requested format is not
+   available".
+4. **Real error reporting.** yt-dlp stderr is classified into codes (`BOT_CHECK`, `RATE_LIMIT`,
+   `AGE_RESTRICTED`, `GEO_BLOCKED`, `PRIVATE`, `NOT_FOUND`, …) that reach the UI, instead of the
+   old generic `Failed to parse yt-dlp output`.
+
+### Checking a live deployment
+
+```bash
+curl https://your-app.onrender.com/api/health
+```
+
+```json
+{
+  "ytdlp": { "bin": "yt-dlp", "version": "2026.08.19" },
+  "ffmpeg": true,
+  "potProvider": { "url": "http://127.0.0.1:4416", "reachable": true, "version": "2.0.0" },
+  "cookies": { "configured": false, "path": null },
+  "playerClientChain": "mweb -> tv_simply -> default"
+}
+```
+
+If `potProvider.reachable` is `false`, the app silently drops to the PO-free chain — still
+working, but less reliable. Fix it before blaming YouTube.
+
+### If it still fails
+
+- **Age-restricted or members-only video** needs a real session. Export a Netscape
+  `cookies.txt` from a logged-in browser, put it on the server, and set `YTDLP_COOKIES` to its
+  path. Use a throwaway account — YouTube invalidates sessions faster when it sees them used
+  from a datacentre IP, and a flagged account is a real risk.
+- **Sustained traffic** (hundreds of downloads/day) will get the IP rate-limited regardless of
+  client tuning. At that volume you need residential or rotating proxies via `--proxy`.
+- **Keep yt-dlp on the nightly channel.** YouTube changes its checks constantly and only recent
+  builds carry the counter-fixes. The Dockerfile already pulls nightly.
+
+### Frontend build
+
+Set the API origin at build time — the frontend and the API are on different hosts in
+production, and a hard-coded `http://` URL is additionally blocked as mixed content on an
+HTTPS page:
+
+```bash
+VITE_API_URL=https://your-app.onrender.com npm run build
+```
+
+Without it, requests silently target the wrong origin. The resolved value is inlined into the
+bundle at build time.
+
+### Configuration reference
+
+See [`backend/.env.example`](backend/.env.example) for every knob: `YTDLP_BIN`,
+`YTDLP_POT_PROVIDER_URL`, `YTDLP_PLUGIN_DIRS`, `YTDLP_PLAYER_CLIENT_CHAIN`, `YTDLP_COOKIES`,
+and the fetch/download timeouts.

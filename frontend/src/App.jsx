@@ -8,10 +8,11 @@ import Features from './components/Features';
 import Workflow from './components/Workflow';
 import CTA from './components/CTA';
 import Footer from './components/Footer';
+import { apiUrl, readApiError } from './lib/api';
 
 function App() {
   const [isLoading, setIsLoading] = useState(false);
-  const [fetchError, setFetchError] = useState(false);
+  const [fetchError, setFetchError] = useState(null);
   const [videoData, setVideoData] = useState(null);
   const [videoUrl, setVideoUrl] = useState('');
   const navigate = useNavigate();
@@ -35,21 +36,22 @@ function App() {
     if (!url) return;
     
     setIsLoading(true);
-    setFetchError(false);
+    setFetchError(null);
     setVideoUrl(url);
 
-    const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
     try {
-      const response = await fetch(`${API_BASE}/api/fetch-info`, {
+      const response = await fetch(apiUrl('/api/fetch-info'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ url })
       });
-      
+
       if (!response.ok) {
-        throw new Error('Failed to fetch video info');
+        // Surface the real reason (bot check, geo-block, bad URL, ...) instead
+        // of a generic "failed" message.
+        throw await readApiError(response, 'Failed to fetch video info');
       }
 
       const data = await response.json();
@@ -58,7 +60,11 @@ function App() {
       navigate('/convert');
     } catch (error) {
       console.error(error);
-      setFetchError(true);
+      setFetchError({
+        message: error.message || 'Could not reach the download server.',
+        code: error.code || 'NETWORK',
+        hint: error.hint || '',
+      });
     } finally {
       setIsLoading(false);
     }

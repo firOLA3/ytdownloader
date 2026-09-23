@@ -156,3 +156,13 @@
     opacity: 0.3;
   }
 }
+.error-detail {
+  margin-top: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-width: 42rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  text-align: left;
+}

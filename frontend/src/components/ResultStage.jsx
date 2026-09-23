@@ -103,14 +103,15 @@ const ResultStage = ({ videoData, videoUrl }) => {
         </div>
       </div>
       
-      {isModalOpen && (
-        <DownloadModal 
-          videoTitle={videoData.title} 
-          videoUrl={videoUrl}
-          format={selectedFormat}
-          onClose={() => setIsModalOpen(false)} 
-        />
-      )}
+          {isModalOpen && (
+            <DownloadModal 
+              videoTitle={videoData.title} 
+              videoUrl={videoUrl}
+              format={selectedFormat}
+              playerClient={videoData.clientUsed}
+              onClose={() => setIsModalOpen(false)} 
+            />
+          )}
     </section>
   );
 };

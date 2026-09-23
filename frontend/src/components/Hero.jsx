@@ -84,6 +84,14 @@ const Hero = ({ onStartDownload, isLoading, fetchError }) => {
               'START DOWNLOAD'
             )}
           </button>
+
+          {fetchError && (
+            <div className="error-detail mono" role="alert">
+              <span className="text-neon">{fetchError.message}</span>
+              {fetchError.hint && <span className="text-gray">{fetchError.hint}</span>}
+              <span className="text-gray">[{fetchError.code}]</span>
+            </div>
+          )}
         </div>
         
         <div className="hero-supported mono">
