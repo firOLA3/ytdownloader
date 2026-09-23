@@ -29,7 +29,7 @@ jobs:
         working-directory: ./frontend
         
       - name: 🏗️ Build Frontend
-        run: npm run build
+        run: VITE_API_URL="https://ytdownloader-wj92.onrender.com" npm run build
         working-directory: ./frontend
         
       - name: 🚀 Sync files via FTP
