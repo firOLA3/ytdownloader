@@ -94,6 +94,7 @@ ytdownloader/
 │   ├── services/          # Business logic (jobTracker.js, ytdlp.js)
 │   ├── server.js          # Server entry point
 │   ├── entrypoint.sh      # Starts the PO-token provider, then server.js
+│   ├── scripts/           # ci-health-check.py — CI wiring assertion
 │   ├── Dockerfile         # node:22 + nightly yt-dlp + ffmpeg + bgutil provider
 │   └── .env.example       # Every configurable knob, documented
 └── frontend/
@@ -172,6 +173,13 @@ curl https://your-app.onrender.com/api/health
 
 If `potProvider.reachable` is `false`, the app silently drops to the PO-free chain — still
 working, but less reliable. Fix it before blaming YouTube.
+
+### CI
+
+The backend deploys to Render straight from this repo, so there is no backend deploy workflow.
+`.github/workflows/backend-ci.yml` instead builds the image, boots it, and asserts via
+`backend/scripts/ci-health-check.py` that yt-dlp, ffmpeg and the PO-token provider are actually
+wired up — catching a broken `Dockerfile` or `entrypoint.sh` before Render does.
 
 ### If it still fails
 

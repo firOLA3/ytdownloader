@@ -1,0 +1,82 @@
+name: Backend CI — build & boot the Docker image
+
+# The backend deploys to Render directly from this repository, so there is
+# nothing to push here. What this workflow does instead is build the exact image
+# Render will build, boot it, and assert that the pieces which are easy to get
+# wrong — the nightly yt-dlp binary, ffmpeg, and the bgutil PO-token provider —
+# are actually wired up. Without the provider, every fetch fails in production
+# with "Sign in to confirm you're not a bot".
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-boot:
+    name: Build image and smoke-test /api/health
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v4
+
+      - name: 🔎 Syntax check
+        run: |
+          node --check server.js
+          node --check routes/api.js
+          node --check services/ytdlp.js
+          node --check services/jobTracker.js
+          node --check models/DownloadHistory.js
+          sh -n entrypoint.sh
+          echo "all files parse"
+
+      - name: 🐳 Build the Docker image
+        run: docker build --progress=plain -t ytdownloader-backend:ci .
+
+      - name: 🚀 Boot the container
+        run: |
+          docker run -d --name ytdl-ci -p 5055:5055 \
+            -e PORT=5055 \
+            -e MONGO_URI='mongodb://127.0.0.1:27017/none?serverSelectionTimeoutMS=1000' \
+            ytdownloader-backend:ci
+          echo "container started"
+
+      - name: 🩺 Wait for /api/health and assert the wiring
+        run: |
+          ok=""
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:5055/api/health > /tmp/health.json 2>/dev/null; then
+              ok=1
+              break
+            fi
+            sleep 2
+          done
+
+          echo "--- container logs ---"
+          docker logs ytdl-ci || true
+          echo "--- /api/health ---"
+          cat /tmp/health.json 2>/dev/null || true
+          echo
+
+          if [ -z "$ok" ]; then
+            echo "::error::/api/health never responded within 120s"
+            exit 1
+          fi
+
+          python3 scripts/ci-health-check.py /tmp/health.json
+
+      - name: 🧹 Cleanup
+        if: always()
+        run: docker rm -f ytdl-ci || true
