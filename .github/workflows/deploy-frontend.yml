@@ -28,9 +28,26 @@ jobs:
         run: npm ci
         working-directory: ./frontend
         
+      - name: 🔑 Check API URL secret is configured
+        run: |
+          if [ -z "$VITE_API_URL" ]; then
+            echo "::error::VITE_API_URL is not set. Add it as a repository secret"
+            echo "       pointing at the Render backend (e.g. https://your-app.onrender.com)."
+            echo "       Without it the built bundle targets the wrong origin and every"
+            echo "       fetch fails in the browser."
+            exit 1
+          fi
+          echo "Building against API: $VITE_API_URL"
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
       - name: 🏗️ Build Frontend
         run: npm run build
         working-directory: ./frontend
+        env:
+          # Baked into the bundle at build time — the frontend (cPanel) and the
+          # API (Render) are on different hosts.
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
         
       - name: 🚀 Sync files via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
