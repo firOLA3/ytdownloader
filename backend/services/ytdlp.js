@@ -6,9 +6,8 @@ const DownloadHistory = require('../models/DownloadHistory');
 const fetchInfo = (url) => {
   return new Promise((resolve, reject) => {
     // Nightly yt-dlp update fixed the 429 error, so we revert back to default client to get all DASH formats
-    // Nightly yt-dlp update fixed the 429 error, so we revert back to default client to get all DASH formats
-    // Render IP is hard-banned. We MUST use Android client spoofing to bypass it, even though it limits max resolution to 720p.
-    const ytdlp = spawn('yt-dlp', ['--extractor-args', 'youtube:player_client=android', '-j', url]);
+    // Removed Android client spoofing because we are running locally and want all DASH formats
+    const ytdlp = spawn('yt-dlp', ['-j', url]);
     
     let stdoutData = '';
     let stderrData = '';
@@ -70,7 +69,7 @@ const startDownload = (jobId, url, formatId, type, title) => {
   const fileNameTemplate = `${sanitizedTitle}_${jobId}.%(ext)s`;
   const outputPath = path.join(downloadDir, fileNameTemplate);
 
-  let args = ['--extractor-args', 'youtube:player_client=android'];
+  let args = ['--rm-cache-dir'];
   
   if (type === 'audio') {
     args.push('-x', '--audio-format', 'mp3', '-o', outputPath, url);
@@ -87,10 +86,17 @@ const startDownload = (jobId, url, formatId, type, title) => {
   ytdlp.stdout.on('data', (data) => {
     const output = data.toString();
     // Parse progress. Typical yt-dlp output: "[download]  45.0% of 50.00MiB at  5.00MiB/s ETA 00:05"
-    const match = output.match(/\[download\]\s+([\d\.]+)%/);
-    if (match && match[1]) {
-      const percent = parseFloat(match[1]);
-      updateJob(jobId, { percent });
+    const percentMatch = output.match(/\[download\]\s+([\d\.]+)%/);
+    if (percentMatch && percentMatch[1]) {
+      const percent = parseFloat(percentMatch[1]);
+      
+      const speedMatch = output.match(/at\s+([~\d\.\w\/]+)/);
+      const speed = speedMatch ? speedMatch[1].replace('~', '') : null;
+      
+      const etaMatch = output.match(/ETA\s+([\d:]+)/);
+      const eta = etaMatch ? etaMatch[1] : null;
+
+      updateJob(jobId, { percent, speed, eta });
     }
   });
 

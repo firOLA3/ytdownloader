@@ -4,16 +4,39 @@
   --bg-dark: #0a0a0a;
   --bg-dark-green: #11291b;
   --bg-light: #f5f5ef;
-  
+
   --accent-neon: #aeff00;
-  
+
   --text-white: #ffffff;
   --text-gray: #9ca3af;
   --text-black: #000000;
   --text-dark-gray: #374151;
-  
+
+  --accent-glow: rgba(174, 255, 0, 0.2);
+  --accent-glow-subtle: rgba(174, 255, 0, 0.05);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'Space Mono', monospace;
+}
+
+[data-theme="light"] {
+  --bg-dark: #f5f5ef;
+  --bg-dark-green: #e6f0eb;
+  --bg-light: #0a0a0a;
+
+  --accent-neon: #5100ff;
+
+  --text-white: #000000;
+  --text-gray: #374151;
+  --text-black: #ffffff;
+  --text-dark-gray: #9ca3af;
+
+  --accent-glow: rgba(81, 0, 255, 0.2);
+  --accent-glow-subtle: rgba(81, 0, 255, 0.05);
+  --border-color: rgba(0, 0, 0, 0.1);
+  --border-subtle: rgba(0, 0, 0, 0.05);
 }
 
 * {
@@ -30,7 +53,47 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, h4, h5, h6 {
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  background: radial-gradient(800px circle at var(--mouse-x, 50vw) var(--mouse-y, 50vh),
+      rgba(174, 255, 0, 0.04),
+      transparent 40%);
+  z-index: 1000;
+  mix-blend-mode: screen;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 50px 50px;
+  z-index: 0;
+}
+
+.app-container {
+  position: relative;
+  z-index: 1;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.03em;
@@ -81,4 +144,32 @@ a {
 
 .section-padding {
   padding: 8rem 0;
+}
+
+/* Animations */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.delay-100 {
+  transition-delay: 100ms;
+}
+
+.delay-200 {
+  transition-delay: 200ms;
+}
+
+.delay-300 {
+  transition-delay: 300ms;
+}
+
+.delay-400 {
+  transition-delay: 400ms;
 }

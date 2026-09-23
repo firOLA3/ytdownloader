@@ -1,18 +1,25 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { useTheme } from '../context/ThemeProvider';
 import './Header.css';
 
 const Header = () => {
+  const { theme, toggleTheme } = useTheme();
   return (
     <header className="header">
       <div className="header-nav container">
-        <div className="logo">YTDOWNLOADER</div>
+        <Link to="/" className="logo" style={{ textDecoration: 'none' }}>YTDOWNLOADER</Link>
         <nav className="nav-links mono">
-          <a href="#how-it-works">HOW IT WORKS</a>
-          <a href="#support">SUPPORT</a>
-          <a href="#faq">FAQ</a>
+          <Link to="/history" className="text-neon">HISTORY</Link>
+          <a href="/#how-it-works">HOW IT WORKS</a>
+          <a href="/#support">SUPPORT</a>
+          <a href="/#faq">FAQ</a>
+          <div className="theme-toggle" onClick={toggleTheme}>
+            <div className={`theme-toggle-thumb ${theme === 'light' ? 'light' : ''}`}></div>
+          </div>
         </nav>
       </div>
-      
+
       <div className="container">
         <div className="header-ticker bg-neon mono">
           <div className="ticker-content">

@@ -1,5 +1,8 @@
+const EventEmitter = require('events');
+
 // Simple in-memory job tracker
 const jobs = new Map();
+const jobEmitter = new EventEmitter();
 
 const getJob = (jobId) => {
   return jobs.get(jobId);
@@ -24,6 +27,7 @@ const updateJob = (jobId, updates) => {
   if (job) {
     Object.assign(job, updates);
     jobs.set(jobId, job);
+    jobEmitter.emit(`job-${jobId}`, job);
   }
   return job;
 };
@@ -31,5 +35,6 @@ const updateJob = (jobId, updates) => {
 module.exports = {
   getJob,
   createJob,
-  updateJob
+  updateJob,
+  jobEmitter
 };

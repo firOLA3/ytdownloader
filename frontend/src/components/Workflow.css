@@ -43,16 +43,17 @@
     grid-template-columns: 1fr;
     gap: 0;
   }
-  
+
   .workflow-step {
     border-top: 2px solid var(--text-black);
     padding: 3rem 0;
   }
-  
+
   .workflow-separator {
-    display: none; /* We use border-top on items instead */
+    display: none;
+    /* We use border-top on items instead */
   }
-  
+
   .workflow-step:last-child {
     border-bottom: 2px solid var(--text-black);
   }

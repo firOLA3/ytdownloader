@@ -41,6 +41,13 @@
   padding: 0.5rem;
   border-radius: 2px;
   margin-bottom: 2rem;
+  transition: box-shadow 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.hero-input-area:focus-within {
+  box-shadow: 0 0 20px rgba(174, 255, 0, 0.15);
+  border-color: rgba(174, 255, 0, 0.3);
 }
 
 @media (max-width: 600px) {
@@ -70,7 +77,9 @@
   font-size: 0.85rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  transition: filter 0.2s;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 @media (max-width: 600px) {
@@ -81,8 +90,14 @@
   }
 }
 
-.hero-button:hover {
+.hero-button:hover:not(:disabled) {
   filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(174, 255, 0, 0.3);
+}
+
+.hero-button:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .hero-supported {
@@ -110,15 +125,20 @@
 .spinner {
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(0,0,0,0.2);
+  border: 2px solid rgba(0, 0, 0, 0.2);
   border-top: 2px solid var(--text-black);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .blinking-text {
@@ -126,7 +146,13 @@
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
 
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+}

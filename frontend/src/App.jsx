@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import ResultStage from './components/ResultStage';
+import History from './components/History';
 import Features from './components/Features';
 import Workflow from './components/Workflow';
 import CTA from './components/CTA';
@@ -10,18 +11,36 @@ import Footer from './components/Footer';
 
 function App() {
   const [isLoading, setIsLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   const [videoData, setVideoData] = useState(null);
   const [videoUrl, setVideoUrl] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
+      document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   const handleStartDownload = async (url) => {
     if (!url) return;
     
     setIsLoading(true);
+    setFetchError(false);
     setVideoUrl(url);
 
+    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     try {
-      const response = await fetch('https://ytdownloader-wj92.onrender.com/api/fetch-info', {
+      const response = await fetch(`${API_BASE}/api/fetch-info`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -39,7 +58,7 @@ function App() {
       navigate('/convert');
     } catch (error) {
       console.error(error);
-      alert('Error fetching video information. Please check the URL.');
+      setFetchError(true);
     } finally {
       setIsLoading(false);
     }
@@ -52,7 +71,7 @@ function App() {
         <Routes>
           <Route 
             path="/" 
-            element={<Hero onStartDownload={handleStartDownload} isLoading={isLoading} />} 
+            element={<Hero onStartDownload={handleStartDownload} isLoading={isLoading} fetchError={fetchError} />} 
           />
           <Route 
             path="/convert" 
@@ -64,6 +83,7 @@ function App() {
               )
             } 
           />
+          <Route path="/history" element={<History />} />
         </Routes>
         <Features />
         <Workflow />

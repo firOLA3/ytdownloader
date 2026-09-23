@@ -22,6 +22,21 @@
   gap: 3rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: 3rem;
+  perspective: 1000px;
+}
+
+.feature-card {
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-color 0.3s ease;
+  border: 1px solid transparent;
+  padding: 2rem;
+  border-radius: 4px;
+}
+
+.feature-card:hover {
+  transform: translateY(-10px) rotateX(5deg) rotateY(2deg);
+  box-shadow: 0 15px 35px rgba(174, 255, 0, 0.05);
+  border-color: rgba(174, 255, 0, 0.2);
+  background-color: rgba(255, 255, 255, 0.02);
 }
 
 .feature-number {
@@ -45,11 +60,11 @@
     align-items: flex-start;
     gap: 2rem;
   }
-  
+
   .features-title {
     text-align: left;
   }
-  
+
   .features-grid {
     grid-template-columns: 1fr;
     border-top: none;
@@ -61,7 +76,7 @@
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     padding: 3rem 0;
   }
-  
+
   .feature-card:last-child {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }

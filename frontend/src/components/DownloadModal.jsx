@@ -4,16 +4,19 @@ import './DownloadModal.css';
 const DownloadModal = ({ videoTitle, videoUrl, format, onClose }) => {
   const [jobId, setJobId] = useState(null);
   const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState('initializing'); // initializing, downloading, merging, done, error
+  const [status, setStatus] = useState('initializing');
   const [fileUrl, setFileUrl] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [speed, setSpeed] = useState('');
+  const [eta, setEta] = useState('');
 
   useEffect(() => {
     if (!format || !videoUrl) return;
 
     const startDownload = async () => {
       try {
-        const response = await fetch('https://ytdownloader-wj92.onrender.com/api/download', {
+        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const response = await fetch(`${API_BASE}/api/download`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -40,27 +43,40 @@ const DownloadModal = ({ videoTitle, videoUrl, format, onClose }) => {
   useEffect(() => {
     if (!jobId || status === 'done' || status === 'error') return;
 
-    const pollStatus = setInterval(async () => {
+    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const eventSource = new EventSource(`${API_BASE}/api/download-stream/${jobId}`);
+
+    eventSource.onmessage = (event) => {
       try {
-        const response = await fetch(`https://ytdownloader-wj92.onrender.com/api/download-status/${jobId}`);
-        if (response.ok) {
-          const job = await response.json();
-          setProgress(job.percent || 0);
-          setStatus(job.status);
-          if (job.status === 'done') {
-            setFileUrl(`https://ytdownloader-wj92.onrender.com${job.filePath}`);
-            clearInterval(pollStatus);
-          } else if (job.status === 'error') {
-            setErrorMessage(job.error || 'An error occurred during download.');
-            clearInterval(pollStatus);
-          }
+        const job = JSON.parse(event.data);
+        setProgress(job.percent || 0);
+        setStatus(job.status);
+        if (job.speed) setSpeed(job.speed);
+        if (job.eta) setEta(job.eta);
+        
+        if (job.status === 'done') {
+          const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+          setFileUrl(`${API_BASE}${job.filePath}`);
+          eventSource.close();
+        } else if (job.status === 'error') {
+          setErrorMessage(job.error || 'An error occurred during download.');
+          eventSource.close();
         }
       } catch (err) {
-        console.error('Polling error', err);
+        console.error('SSE Error:', err);
       }
-    }, 1000);
+    };
 
-    return () => clearInterval(pollStatus);
+    eventSource.onerror = (err) => {
+      console.error('EventSource failed:', err);
+      eventSource.close();
+      if (status !== 'done') {
+        setStatus('error');
+        setErrorMessage('Lost connection to server.');
+      }
+    };
+
+    return () => eventSource.close();
   }, [jobId, status]);
 
   if (!format) return null;
@@ -89,11 +105,12 @@ const DownloadModal = ({ videoTitle, videoUrl, format, onClose }) => {
 
           {(status === 'downloading' || status === 'merging') && (
             <div style={{width: '100%'}}>
-              <div className="modal-wait-text mono text-neon" style={{marginBottom: '0.5rem', textAlign: 'left'}}>
-                {status.toUpperCase()}... {progress}%
+              <div className="modal-wait-text mono text-neon" style={{marginBottom: '0.5rem', textAlign: 'left', display: 'flex', justifyContent: 'space-between'}}>
+                <span>{status.toUpperCase()}... {progress}%</span>
+                {speed && <span>{speed}/s | ETA: {eta || 'Unknown'}</span>}
               </div>
               <div style={{width: '100%', height: '8px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '4px', overflow: 'hidden'}}>
-                <div style={{width: `${progress}%`, height: '100%', backgroundColor: 'var(--text-neon)', transition: 'width 0.3s ease'}} />
+                <div style={{width: `${progress}%`, height: '100%', backgroundColor: 'var(--accent-neon)', transition: 'width 0.1s linear'}} />
               </div>
             </div>
           )}

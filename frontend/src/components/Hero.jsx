@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import './Hero.css';
 
-const Hero = ({ onStartDownload, isLoading }) => {
+const Hero = ({ onStartDownload, isLoading, fetchError }) => {
   const [url, setUrl] = useState('');
+  const [emojiIndex, setEmojiIndex] = useState(0);
+
+  const smilingEmojis = ['🙂', '😊', '😀', '😃', '😄', '😁'];
 
   // Check if it's a valid URL string to trigger auto-fetch
   const isValidUrl = (str) => {
@@ -15,6 +18,20 @@ const Hero = ({ onStartDownload, isLoading }) => {
       onStartDownload(url);
     }
   }, [url]);
+
+  // Animate emojis while loading
+  useEffect(() => {
+    let interval;
+    if (isLoading) {
+      interval = setInterval(() => {
+        setEmojiIndex((prev) => (prev + 1) % smilingEmojis.length);
+      }, 500); // Change emoji every 500ms
+    } else {
+      setEmojiIndex(0); // Reset when not loading
+    }
+    
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   const handleStart = () => {
     if (url) onStartDownload(url);
@@ -57,7 +74,11 @@ const Hero = ({ onStartDownload, isLoading }) => {
             {isLoading ? (
               <div className="loader-container">
                 <span className="spinner"></span>
-                <span className="blinking-text mono">FETCHING...</span>
+                <span className="blinking-text mono">FETCHING... {smilingEmojis[emojiIndex]}</span>
+              </div>
+            ) : fetchError ? (
+              <div className="error-container">
+                <span className="mono">FETCH FAILED 😞</span>
               </div>
             ) : (
               'START DOWNLOAD'

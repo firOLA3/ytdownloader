@@ -53,6 +53,49 @@ router.get('/download-status/:jobId', (req, res) => {
   res.json(job);
 });
 
+// GET /api/download-stream/:jobId (SSE endpoint)
+router.get('/download-stream/:jobId', (req, res) => {
+  const { jobId } = req.params;
+  
+  // Set headers for SSE
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive'
+  });
+
+  const sendEvent = (data) => {
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  };
+
+  // Send initial state immediately
+  const initialJob = jobTracker.getJob(jobId);
+  if (initialJob) {
+    sendEvent(initialJob);
+  } else {
+    sendEvent({ status: 'error', error: 'Job not found' });
+    return res.end();
+  }
+
+  // Listener for future updates
+  const listener = (job) => {
+    sendEvent(job);
+    if (job.status === 'done' || job.status === 'error') {
+      cleanup();
+    }
+  };
+
+  const eventName = `job-${jobId}`;
+  jobTracker.jobEmitter.on(eventName, listener);
+
+  const cleanup = () => {
+    jobTracker.jobEmitter.removeListener(eventName, listener);
+    res.end();
+  };
+
+  req.on('close', cleanup);
+});
+
 // GET /api/history
 router.get('/history', async (req, res) => {
   try {
