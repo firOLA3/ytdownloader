@@ -15,7 +15,7 @@ const DownloadModal = ({ videoTitle, videoUrl, format, onClose }) => {
 
     const startDownload = async () => {
       try {
-        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
         const response = await fetch(`${API_BASE}/api/download`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -43,7 +43,7 @@ const DownloadModal = ({ videoTitle, videoUrl, format, onClose }) => {
   useEffect(() => {
     if (!jobId || status === 'done' || status === 'error') return;
 
-    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
     const eventSource = new EventSource(`${API_BASE}/api/download-stream/${jobId}`);
 
     eventSource.onmessage = (event) => {
@@ -55,7 +55,7 @@ const DownloadModal = ({ videoTitle, videoUrl, format, onClose }) => {
         if (job.eta) setEta(job.eta);
         
         if (job.status === 'done') {
-          const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+          const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
           setFileUrl(`${API_BASE}${job.filePath}`);
           eventSource.close();
         } else if (job.status === 'error') {

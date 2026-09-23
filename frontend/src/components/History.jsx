@@ -13,7 +13,7 @@ const History = () => {
 
   const fetchHistory = async () => {
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`;
       const response = await fetch(`${API_BASE}/api/history`);
       if (!response.ok) throw new Error('Failed to fetch history');
       
@@ -95,7 +95,7 @@ const History = () => {
                     </td>
                     <td className="action-col">
                       <a 
-                        href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${item.filePath}`} 
+                        href={`${import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000`}${item.filePath}`} 
                         download 
                         className="history-download-btn"
                         title="Download again"
